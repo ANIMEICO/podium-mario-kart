@@ -1,4 +1,4 @@
-<index.html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -70,8 +70,8 @@
         const grouped = {};
 
         entries.forEach(e => {
+          const pseudo = e["Ton pseudo joueur (celui qui apparaîtra dans)"];
           const console = e["Choisis ta console (et le circuit imposé)"];
-          const pseudo = e["Ton pseudo joueur (celui qui apparaîtra dans le classement)"];
           const chrono = e["Ton meilleur temps (au format mm:ss:ms)"];
           if (!console || !pseudo || !chrono) return;
 
