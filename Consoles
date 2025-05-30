@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Classement Mario Kart – Live</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #ffe600;
+    }
+    .console {
+      margin: 40px 0;
+      background-color: #222;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    h2 {
+      color: #00f0ff;
+      margin-top: 0;
+    }
+    .podium {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+    }
+    .player {
+      text-align: center;
+    }
+    .rank {
+      font-size: 2em;
+    }
+  </style>
+</head>
+<body>
+  <h1>🏁 Classement en direct – Mario Kart 🏆</h1>
+  <div id="leaderboards">Chargement...</div>
+
+  <script>
+    const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRU6XGT0W_GLOkrww4p6qalRKSS6fi2c4BKgoT7IUUdhzApBjlQopI2b4PfrLsIY2E9Sogu5WDZDlAN/pub?output=csv";
+
+    function parseCSV(data) {
+      const lines = data.split("\\n");
+      const headers = lines[0].split(",");
+      const rows = lines.slice(1).map(line => {
+        const values = line.split(",");
+        let obj = {};
+        headers.forEach((header, i) => {
+          obj[header.trim()] = values[i] ? values[i].trim() : "";
+        });
+        return obj;
+      });
+      return rows;
+    }
+
+    function parseTime(str) {
+      const [min, sec, ms] = str.split(":").map(Number);
+      return min * 60000 + sec * 1000 + ms;
+    }
+
+    fetch(SHEET_CSV_URL)
+      .then(res => res.text())
+      .then(data => {
+        const entries = parseCSV(data);
+        const grouped = {};
+
+        entries.forEach(e => {
+          const console = e["Choisis ta console (et le circuit imposé)"];
+          const pseudo = e["Ton pseudo joueur (celui qui apparaîtra dans le classement)"];
+          const chrono = e["Ton meilleur temps (au format mm:ss:ms)"];
+          if (!console || !pseudo || !chrono) return;
+
+          if (!grouped[console]) grouped[console] = [];
+          grouped[console].push({ pseudo, chrono, timeMs: parseTime(chrono) });
+        });
+
+        let html = "";
+
+        for (const [console, players] of Object.entries(grouped)) {
+          const top3 = players.sort((a, b) => a.timeMs - b.timeMs).slice(0, 3);
+          html += `<div class="console"><h2>${console}</h2><div class="podium">`;
+
+          top3.forEach((p, i) => {
+            const medal = ["🥇", "🥈", "🥉"][i];
+            html += `<div class="player"><div class="rank">${medal}</div><div>${p.pseudo}</div><div>${p.chrono}</div></div>`;
+          });
+
+          html += "</div></div>";
+        }
+
+        document.getElementById("leaderboards").innerHTML = html || "<p>Aucun score encore enregistré.</p>";
+      })
+      .catch(err => {
+        console.error(err);
+        document.getElementById("leaderboards").innerHTML = "<p>Erreur lors du chargement des données.</p>";
+      });
+  </script>
+</body>
+</html>
