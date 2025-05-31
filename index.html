@@ -110,9 +110,20 @@
     }
 
     function parseTime(str) {
-      const [min, sec, ms] = str.split(":").map(Number);
-      return min * 60000 + sec * 1000 + ms;
-    }
+  const parts = str.split(":").map(Number);
+  if (parts.length === 3) {
+    const [min, sec, ms] = parts;
+    return min * 60000 + sec * 1000 + ms;
+  } else if (parts.length === 2) {
+    const [min, sec] = parts;
+    return min * 60000 + sec * 1000;
+  } else if (parts.length === 1) {
+    const [sec] = parts;
+    return sec * 1000;
+  } else {
+    return Number.MAX_SAFE_INTEGER; // Valeur élevée pour placer les temps non valides à la fin
+  }
+}
 
     fetch(SHEET_CSV_URL)
       .then(res => res.text())
