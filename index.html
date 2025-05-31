@@ -1,131 +1,118 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>🏁 Concours Mario Kart – Leclerc Marmoutier ✕ Animeico</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🏁 Podium Mario Kart – Leclerc Marmoutier x Animeico</title>
   <style>
     body {
-      font-family: 'Open Sans', sans-serif;
-      background-color: #203451;
-      color: #FFFFFF;
-      margin: 0;
-      padding: 20px;
+      background: url('bg.jpg') no-repeat center center fixed;
+      background-size: cover;
+      font-family: 'Arial', sans-serif;
+      color: white;
+      text-shadow: 2px 2px 4px #000;
     }
     h1 {
       text-align: center;
-      font-size: 2.5em;
-      color: #FBB900;
+      font-size: 3rem;
+      margin-top: 1rem;
+      animation: zoomIn 1s ease-out;
     }
-    .console {
-      background-color: #2c4867;
-      border-left: 5px solid #36A9E0;
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 30px;
-    }
-    .console h3 {
-      color: #36A9E0;
-      font-size: 1.4em;
+    .counter {
+      text-align: center;
+      font-size: 1.5rem;
+      margin-top: 0.5rem;
     }
     .podium {
+      max-width: 1200px;
+      margin: auto;
       display: flex;
+      flex-wrap: wrap;
       justify-content: space-around;
+      gap: 2rem;
+      padding: 2rem;
+      background-color: rgba(0, 0, 0, 0.6);
+      border-radius: 15px;
+    }
+    .console-block {
+      flex: 1 1 300px;
+      padding: 1rem;
+      border: 2px solid #fff;
+      border-radius: 10px;
+      background-color: rgba(255, 255, 255, 0.1);
       text-align: center;
-      margin-top: 20px;
     }
-    .player {
-      background-color: #ffffff;
-      color: #203451;
-      padding: 15px;
-      border-radius: 8px;
-      width: 30%;
-      box-shadow: 0 0 10px #00000044;
-      animation: appear 0.8s ease-out;
+    .console-block h2 {
+      color: #FFD700;
+      margin-bottom: 1rem;
     }
-    .player:first-child {
-      animation: bounce 1s ease-in-out 0.5s infinite alternate;
+    ol {
+      list-style: none;
+      padding-left: 0;
     }
-    .rank {
-      font-size: 2em;
+    li {
+      font-size: 1.5rem;
+      margin: 0.5rem 0;
     }
-    @keyframes appear {
-      from { transform: translateY(30px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    @keyframes bounce {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
+    @keyframes zoomIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
     }
   </style>
 </head>
 <body>
-  <h1>🏁 Concours Mario Kart</h1>
-  <div id="leaderboards">Chargement des scores en direct...</div>
+  <h1>🏁 Podium Mario Kart</h1>
+  <div class="counter" id="counter">Chargement des participations...</div>
+  <div class="podium" id="podium">Chargement des scores...</div>
 
   <script>
-    const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRU6XGT0W_GLOkrww4p6qalRKSS6fi2c4BKgoT7IUUdhzApBjlQopI2b4PfrLsIY2E9Sogu5WDZDlAN/pub?output=csv";
+    async function fetchData() {
+      const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRU6XGT0W_GLOkrww4p6qalRKSS6fi2c4BKgoT7IUUdhzApBjlQopI2b4PfrLsIY2E9Sogu5WDZDlAN/pub?output=csv";
+      const response = await fetch(url);
+      const data = await response.text();
+      const rows = data.split("\n").map(row => row.split(","));
 
-    function parseCSV(data) {
-      const lines = data.trim().split("\n");
-      const headers = lines[0].split(",");
-      const rows = lines.slice(1).map(line => {
-        const values = line.split(",");
-        let obj = {};
-        headers.forEach((header, i) => {
-          obj[header.trim()] = values[i] ? values[i].trim() : "";
-        });
-        return obj;
-      });
-      return rows;
+      const headers = rows[0];
+      const pseudoIndex = headers.indexOf("Pseudo");
+      const consoleIndex = headers.indexOf("Console");
+      const timeIndex = headers.indexOf("Temps");
+
+      const entries = rows.slice(1)
+        .map(row => ({
+          pseudo: row[pseudoIndex],
+          console: row[consoleIndex],
+          time: row[timeIndex]
+        }))
+        .filter(e => e.pseudo && e.console && e.time);
+
+      document.getElementById("counter").textContent = `🎮 Nombre de participations : ${entries.length}`;
+
+      const consoles = [...new Set(entries.map(e => e.console))];
+
+      const podiumHTML = consoles.map(console => {
+        const podium = entries
+          .filter(e => e.console === console)
+          .sort((a, b) => {
+            const ta = a.time.split(":").map(Number);
+            const tb = b.time.split(":").map(Number);
+            return (ta[0]*60000 + ta[1]*1000 + ta[2]) - (tb[0]*60000 + tb[1]*1000 + tb[2]);
+          })
+          .slice(0, 3)
+          .map((e, i) => `<li>🥇🥈🥉`.charAt(i + 1) + ` ${e.pseudo} – ${e.time}</li>`)
+          .join("");
+
+        return `
+          <div class="console-block">
+            <h2>${console}</h2>
+            <ol>${podium || "<li>Aucun score enregistré</li>"}</ol>
+          </div>
+        `;
+      }).join("");
+
+      document.getElementById("podium").innerHTML = podiumHTML || "<p>Aucun score encore enregistré.</p>";
     }
 
-    function parseTime(str) {
-      const parts = str.split(":").map(Number);
-      if (parts.length === 3) {
-        const [min, sec, ms] = parts;
-        return min * 60000 + sec * 1000 + ms;
-      } else if (parts.length === 2) {
-        const [min, sec] = parts;
-        return min * 60000 + sec * 1000;
-      } else if (parts.length === 1) {
-        const [sec] = parts;
-        return sec * 1000;
-      } else {
-        return Number.MAX_SAFE_INTEGER;
-      }
-    }
-
-    fetch(SHEET_CSV_URL)
-      .then(res => res.text())
-      .then(data => {
-        const entries = parseCSV(data);
-        const grouped = {};
-
-        entries.forEach(e => {
-          const pseudo = e["Ton pseudo joueur (celui qui apparaîtra dans)"];
-          const console = e["Choisis ta console (et le circuit imposé)"];
-          const chrono = e["Ton meilleur temps (au format mm:ss:ms)"];
-          if (!console || !pseudo || !chrono) return;
-          if (!grouped[console]) grouped[console] = [];
-          grouped[console].push({ pseudo, chrono, timeMs: parseTime(chrono) });
-        });
-
-        let html = "";
-        for (const [console, players] of Object.entries(grouped)) {
-          const top3 = players.sort((a, b) => a.timeMs - b.timeMs).slice(0, 3);
-          html += `<div class="console"><h3>${console}</h3><div class="podium">`;
-          top3.forEach((p, i) => {
-            const medal = ["🥇", "🥈", "🥉"][i];
-            html += `<div class="player"><div class="rank">${medal}</div><div>${p.pseudo}</div><div>${p.chrono}</div></div>`;
-          });
-          html += "</div></div>";
-        }
-        document.getElementById("leaderboards").innerHTML = html || "<p style='text-align:center;'>Aucun score encore enregistré.</p>";
-      })
-      .catch(err => {
-        console.error(err);
-        document.getElementById("leaderboards").innerHTML = "<p style='text-align:center;'>Erreur de chargement des scores.</p>";
-      });
+    fetchData();
   </script>
 </body>
 </html>
