@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>🏁 Concours Mario Kart – Leclerc Marmoutier ✕ Animeico</title>
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Open Sans', sans-serif;
@@ -12,21 +11,11 @@
       margin: 0;
       padding: 20px;
     }
-
     h1 {
       text-align: center;
       font-size: 2.5em;
-      margin-bottom: 10px;
       color: #FBB900;
     }
-
-    h2 {
-      text-align: center;
-      font-size: 1.2em;
-      color: #FFFFFF;
-      margin-bottom: 30px;
-    }
-
     .console {
       background-color: #2c4867;
       border-left: 5px solid #36A9E0;
@@ -34,20 +23,16 @@
       border-radius: 10px;
       margin-bottom: 30px;
     }
-
     .console h3 {
-      margin-top: 0;
       color: #36A9E0;
       font-size: 1.4em;
     }
-
     .podium {
       display: flex;
       justify-content: space-around;
       text-align: center;
       margin-top: 20px;
     }
-
     .player {
       background-color: #ffffff;
       color: #203451;
@@ -57,27 +42,16 @@
       box-shadow: 0 0 10px #00000044;
       animation: appear 0.8s ease-out;
     }
-
     .player:first-child {
       animation: bounce 1s ease-in-out 0.5s infinite alternate;
     }
-
     .rank {
       font-size: 2em;
     }
-
-    .footer {
-      margin-top: 50px;
-      text-align: center;
-      color: #575756;
-      font-size: 0.9em;
-    }
-
     @keyframes appear {
       from { transform: translateY(30px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
-
     @keyframes bounce {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.1); }
@@ -86,17 +60,13 @@
 </head>
 <body>
   <h1>🏁 Concours Mario Kart</h1>
-  <h2>Leclerc Marmoutier ✕ Animeico</h2>
-
   <div id="leaderboards">Chargement des scores en direct...</div>
-
-  <div class="footer">L’animation 2.0 – Animeico</div>
 
   <script>
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRU6XGT0W_GLOkrww4p6qalRKSS6fi2c4BKgoT7IUUdhzApBjlQopI2b4PfrLsIY2E9Sogu5WDZDlAN/pub?output=csv";
 
     function parseCSV(data) {
-      const lines = data.split("\\n");
+      const lines = data.trim().split("\n");
       const headers = lines[0].split(",");
       const rows = lines.slice(1).map(line => {
         const values = line.split(",");
@@ -110,20 +80,20 @@
     }
 
     function parseTime(str) {
-  const parts = str.split(":").map(Number);
-  if (parts.length === 3) {
-    const [min, sec, ms] = parts;
-    return min * 60000 + sec * 1000 + ms;
-  } else if (parts.length === 2) {
-    const [min, sec] = parts;
-    return min * 60000 + sec * 1000;
-  } else if (parts.length === 1) {
-    const [sec] = parts;
-    return sec * 1000;
-  } else {
-    return Number.MAX_SAFE_INTEGER; // Valeur élevée pour placer les temps non valides à la fin
-  }
-}
+      const parts = str.split(":").map(Number);
+      if (parts.length === 3) {
+        const [min, sec, ms] = parts;
+        return min * 60000 + sec * 1000 + ms;
+      } else if (parts.length === 2) {
+        const [min, sec] = parts;
+        return min * 60000 + sec * 1000;
+      } else if (parts.length === 1) {
+        const [sec] = parts;
+        return sec * 1000;
+      } else {
+        return Number.MAX_SAFE_INTEGER;
+      }
+    }
 
     fetch(SHEET_CSV_URL)
       .then(res => res.text())
@@ -136,25 +106,20 @@
           const console = e["Choisis ta console (et le circuit imposé)"];
           const chrono = e["Ton meilleur temps (au format mm:ss:ms)"];
           if (!console || !pseudo || !chrono) return;
-
           if (!grouped[console]) grouped[console] = [];
           grouped[console].push({ pseudo, chrono, timeMs: parseTime(chrono) });
         });
 
         let html = "";
-
         for (const [console, players] of Object.entries(grouped)) {
           const top3 = players.sort((a, b) => a.timeMs - b.timeMs).slice(0, 3);
           html += `<div class="console"><h3>${console}</h3><div class="podium">`;
-
           top3.forEach((p, i) => {
             const medal = ["🥇", "🥈", "🥉"][i];
             html += `<div class="player"><div class="rank">${medal}</div><div>${p.pseudo}</div><div>${p.chrono}</div></div>`;
           });
-
           html += "</div></div>";
         }
-
         document.getElementById("leaderboards").innerHTML = html || "<p style='text-align:center;'>Aucun score encore enregistré.</p>";
       })
       .catch(err => {
@@ -163,4 +128,4 @@
       });
   </script>
 </body>
-</html> 
+</html>
