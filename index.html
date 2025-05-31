@@ -2,48 +2,49 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🏁 Podium Mario Kart – Leclerc Marmoutier x Animeico</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Podium Mario Kart – Leclerc Marmoutier x Animeico</title>
   <style>
     body {
-      background: url('bg.jpg') no-repeat center center fixed;
+      margin: 0;
+      font-family: 'Arial Rounded MT Bold', sans-serif;
+      background: url('data:image/jpeg;base64,{{IMAGE_BASE64}}') no-repeat center center fixed;
       background-size: cover;
-      font-family: 'Arial', sans-serif;
-      color: white;
-      text-shadow: 2px 2px 4px #000;
+      color: #fff;
+      text-shadow: 1px 1px 3px #000;
     }
-    h1 {
+    header {
+      background: rgba(0, 0, 0, 0.7);
+      padding: 1rem;
       text-align: center;
-      font-size: 3rem;
-      margin-top: 1rem;
-      animation: zoomIn 1s ease-out;
+    }
+    header h1 {
+      font-size: 2.8rem;
+      margin: 0;
+      color: #FFD700;
     }
     .counter {
       text-align: center;
-      font-size: 1.5rem;
-      margin-top: 0.5rem;
+      margin-top: 1rem;
+      font-size: 1.2rem;
     }
     .podium {
-      max-width: 1200px;
-      margin: auto;
       display: flex;
       flex-wrap: wrap;
-      justify-content: space-around;
+      justify-content: center;
       gap: 2rem;
       padding: 2rem;
-      background-color: rgba(0, 0, 0, 0.6);
-      border-radius: 15px;
     }
-    .console-block {
-      flex: 1 1 300px;
-      padding: 1rem;
-      border: 2px solid #fff;
-      border-radius: 10px;
-      background-color: rgba(255, 255, 255, 0.1);
+    .console {
+      background-color: rgba(0,0,0,0.6);
+      padding: 1rem 2rem;
+      border-radius: 15px;
+      width: 300px;
       text-align: center;
     }
-    .console-block h2 {
-      color: #FFD700;
+    .console h2 {
+      color: #00FFFF;
+      font-size: 1.4rem;
       margin-bottom: 1rem;
     }
     ol {
@@ -51,65 +52,64 @@
       padding-left: 0;
     }
     li {
-      font-size: 1.5rem;
+      font-size: 1.2rem;
       margin: 0.5rem 0;
     }
-    @keyframes zoomIn {
-      from { transform: scale(0.8); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
+    footer {
+      text-align: center;
+      margin: 2rem;
+      font-size: 0.9rem;
     }
   </style>
 </head>
 <body>
-  <h1>🏁 Podium Mario Kart</h1>
+  <header>
+    <h1>🏎️ Podium Mario Kart - Leclerc Marmoutier x Animeico</h1>
+  </header>
   <div class="counter" id="counter">Chargement des participations...</div>
-  <div class="podium" id="podium">Chargement des scores...</div>
+  <section class="podium" id="podium">Chargement des scores...</section>
+  <footer>
+    &copy; 2025 Animeico - Données en temps réel depuis Google Sheets
+  </footer>
 
   <script>
     async function fetchData() {
       const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRU6XGT0W_GLOkrww4p6qalRKSS6fi2c4BKgoT7IUUdhzApBjlQopI2b4PfrLsIY2E9Sogu5WDZDlAN/pub?output=csv";
       const response = await fetch(url);
       const data = await response.text();
-      const rows = data.split("\n").map(row => row.split(","));
-
+      const rows = data.split("\n").map(r => r.split(","));
       const headers = rows[0];
-      const pseudoIndex = headers.indexOf("Pseudo");
-      const consoleIndex = headers.indexOf("Console");
-      const timeIndex = headers.indexOf("Temps");
+      const idxPseudo = headers.indexOf("Pseudo");
+      const idxConsole = headers.indexOf("Console");
+      const idxTemps = headers.indexOf("Temps");
 
-      const entries = rows.slice(1)
-        .map(row => ({
-          pseudo: row[pseudoIndex],
-          console: row[consoleIndex],
-          time: row[timeIndex]
-        }))
-        .filter(e => e.pseudo && e.console && e.time);
+      const results = rows.slice(1).map(row => ({
+        pseudo: row[idxPseudo],
+        console: row[idxConsole],
+        temps: row[idxTemps]
+      })).filter(e => e.pseudo && e.console && e.temps);
 
-      document.getElementById("counter").textContent = `🎮 Nombre de participations : ${entries.length}`;
+      document.getElementById("counter").textContent = `🎮 Nombre de participations : ${results.length}`;
 
-      const consoles = [...new Set(entries.map(e => e.console))];
-
-      const podiumHTML = consoles.map(console => {
-        const podium = entries
+      const consoles = [...new Set(results.map(e => e.console))];
+      const html = consoles.map(console => {
+        const pod = results
           .filter(e => e.console === console)
           .sort((a, b) => {
-            const ta = a.time.split(":").map(Number);
-            const tb = b.time.split(":").map(Number);
-            return (ta[0]*60000 + ta[1]*1000 + ta[2]) - (tb[0]*60000 + tb[1]*1000 + tb[2]);
+            const [ma, sa, ms] = a.temps.split(":").map(Number);
+            const [mb, sb, msb] = b.temps.split(":").map(Number);
+            return (ma*60000 + sa*1000 + ms) - (mb*60000 + sb*1000 + msb);
           })
           .slice(0, 3)
-          .map((e, i) => `<li>🥇🥈🥉`.charAt(i + 1) + ` ${e.pseudo} – ${e.time}</li>`)
-          .join("");
+          .map((e, i) => {
+            const emojis = ["🥇", "🥈", "🥉"];
+            return `<li>${emojis[i] || ""} ${e.pseudo} - ${e.temps}</li>`;
+          }).join("");
 
-        return `
-          <div class="console-block">
-            <h2>${console}</h2>
-            <ol>${podium || "<li>Aucun score enregistré</li>"}</ol>
-          </div>
-        `;
+        return `<div class="console"><h2>${console}</h2><ol>${pod || '<li>Aucun score</li>'}</ol></div>`;
       }).join("");
 
-      document.getElementById("podium").innerHTML = podiumHTML || "<p>Aucun score encore enregistré.</p>";
+      document.getElementById("podium").innerHTML = html;
     }
 
     fetchData();
